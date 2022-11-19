@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -26,6 +27,7 @@ type Config struct {
 	// TimeLimit is the time limit for the quiz in seconds
 	TimeLimit    int
 	ProblemsFile string
+	Shuffle      bool
 }
 
 func readProblems(csvFile string) []Problem {
@@ -58,6 +60,7 @@ func main() {
 	config := Config{
 		TimeLimit:    DefaultTimeLimit,
 		ProblemsFile: "problems.csv",
+		Shuffle:      false,
 	}
 
 	// Parse the command line flags
@@ -73,10 +76,17 @@ func main() {
 		"problems.csv",
 		"a csv file in the format of 'question,answer'",
 	)
+	flag.BoolVar(&config.Shuffle, "shuffle", false, "shuffle the problems")
 	flag.Parse()
 
 	// Read the problems from the csv file
 	problems := readProblems(config.ProblemsFile)
+
+    // Shuffle the problems if shuffle flag is true
+    if config.Shuffle {
+        rand.Seed(time.Now().UnixNano())
+        rand.Shuffle(len(problems), func(i, j int) { problems[i], problems[j] = problems[j], problems[i] })
+    }
 
 	// Wait for user to press enter before starting the quiz timer
 	fmt.Print("Press enter to start the quiz...")
@@ -98,10 +108,10 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 	for i, problem := range problems {
-		fmt.Printf("Problem #%d: %s = ", i, problem.Question)
+		fmt.Printf("Problem #%d: %s = ", i+1, problem.Question)
 		answer, _ := reader.ReadString('\n')
 
-		if strings.TrimSpace(answer) == problem.Answer {
+		if strings.TrimSpace(answer) == strings.ToLower(strings.TrimSpace(problem.Answer)) {
 			score++
 		}
 	}
