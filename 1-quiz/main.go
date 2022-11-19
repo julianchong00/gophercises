@@ -21,6 +21,8 @@ type Problem struct {
 const (
 	// DefaultTimeLimit is the default time limit for the quiz in seconds
 	DefaultTimeLimit = 30
+    DefaultProblemsFile = "problems.csv"
+    DefaultShuffle = false
 )
 
 type Config struct {
@@ -59,8 +61,8 @@ func main() {
 	// Set the default configuration
 	config := Config{
 		TimeLimit:    DefaultTimeLimit,
-		ProblemsFile: "problems.csv",
-		Shuffle:      false,
+		ProblemsFile: DefaultProblemsFile,
+		Shuffle:      DefaultShuffle,
 	}
 
 	// Parse the command line flags
@@ -73,10 +75,10 @@ func main() {
 	flag.StringVar(
 		&config.ProblemsFile,
 		"csv",
-		"problems.csv",
+        DefaultProblemsFile,
 		"a csv file in the format of 'question,answer'",
 	)
-	flag.BoolVar(&config.Shuffle, "shuffle", false, "shuffle the problems")
+	flag.BoolVar(&config.Shuffle, "shuffle", DefaultShuffle, "shuffle the problems")
 	flag.Parse()
 
 	// Read the problems from the csv file
