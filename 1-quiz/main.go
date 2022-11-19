@@ -82,11 +82,14 @@ func main() {
 	// Read the problems from the csv file
 	problems := readProblems(config.ProblemsFile)
 
-    // Shuffle the problems if shuffle flag is true
-    if config.Shuffle {
-        rand.Seed(time.Now().UnixNano())
-        rand.Shuffle(len(problems), func(i, j int) { problems[i], problems[j] = problems[j], problems[i] })
-    }
+	// Shuffle the problems if shuffle flag is true
+	if config.Shuffle {
+		rand.Seed(time.Now().UnixNano())
+		rand.Shuffle(
+			len(problems),
+			func(i, j int) { problems[i], problems[j] = problems[j], problems[i] },
+		)
+	}
 
 	// Wait for user to press enter before starting the quiz timer
 	fmt.Print("Press enter to start the quiz...")
