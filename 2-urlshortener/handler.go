@@ -2,6 +2,8 @@ package urlshortener
 
 import (
 	"net/http"
+
+	"gopkg.in/yaml.v2"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -11,8 +13,8 @@ import (
 // If the path is not provided in the map, then the fallback
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
-    // Return function which implements the http.HandlerFunc method signature
-    // i.e. any function with a ResponseWriter and Request argument
+	// Return function which implements the http.HandlerFunc method signature
+	// i.e. any function with a ResponseWriter and Request argument
 	return func(rw http.ResponseWriter, r *http.Request) {
 		// If we can match path, redirect to it
 		path := r.URL.Path
@@ -42,18 +44,36 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-    parsedYaml, err := parseYAML(yml)
-    if err != nil {
-        return nil, err
-    }
-    pathMap := buildMap(parsedYaml)
-    return MapHandler(pathMap, fallback), nil
+	parsedYaml, err := parseYAML(yml)
+	if err != nil {
+		return nil, err
+	}
+	pathMap := buildMap(parsedYaml)
+	return MapHandler(pathMap, fallback), nil
 }
 
-func parseYAML(yml []byte) ([]byte, error) {
-    return nil, nil
+// Capitalise first letter of fields to make them visible to entire program
+type PathURL struct {
+	Path string `yaml:"path"`
+	Url  string `yaml:"url"`
 }
 
-func buildMap(yml []byte) (map[string]string) {
-    return nil
+// Unmarshal YAML bytes into specified struct
+func parseYAML(yml []byte) ([]PathURL, error) {
+	var pathsToUrls []PathURL
+	err := yaml.Unmarshal(yml, &pathsToUrls)
+	if err != nil {
+		return nil, err
+	}
+
+	return pathsToUrls, nil
+}
+
+func buildMap(yml []PathURL) map[string]string {
+	pathMap := make(map[string]string)
+	for _, pu := range yml {
+		pathMap[pu.Path] = pu.Url
+	}
+
+	return pathMap
 }
