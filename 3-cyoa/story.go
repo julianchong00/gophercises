@@ -1,5 +1,20 @@
 package cyoa
 
+import (
+	"encoding/json"
+	"io"
+)
+
+func JsonStory(r io.Reader) (Story, error) {
+	d := json.NewDecoder(r)
+	var story Story
+	if err := d.Decode(&story); err != nil {
+		return nil, err
+	}
+
+	return story, nil
+}
+
 // define Story type which will store our story data
 type Story map[string]Chapter
 
