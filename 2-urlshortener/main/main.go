@@ -1,13 +1,48 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 
 	"github.com/julianchong00/urlshortener"
 )
 
+type Config struct {
+	YamlFile string
+	JsonFile string
+}
+
+const (
+	DefaultYaml = "urlpath.yaml"
+	DefaultJson = "urlpath.json"
+)
+
 func main() {
+	// Set the default configuration
+	config := Config{
+		YamlFile: DefaultYaml,
+		JsonFile: DefaultJson,
+	}
+
+	// Parse command line flags
+	// yaml file flag
+	flag.StringVar(
+		&config.YamlFile,
+		"yaml",
+		DefaultYaml,
+		"a yaml file to read url paths from",
+	)
+
+	// json file flag
+	flag.StringVar(
+		&config.JsonFile,
+		"json",
+		DefaultJson,
+		"a json file to read url paths from",
+	)
+	flag.Parse()
+
 	mux := defaultMux()
 
 	// Build the MapHandler using the mux as the fallback
@@ -19,13 +54,7 @@ func main() {
 
 	// Build the YAMLHandler using the mapHandler as the
 	// fallback
-	yaml := `
-- path: /urlshort
-  url: https://github.com/gophercises/urlshort
-- path: /urlshort-final
-  url: https://github.com/gophercises/urlshort/tree/solution
-`
-	yamlHandler, err := urlshortener.YAMLHandler([]byte(yaml), mapHandler)
+	yamlHandler, err := urlshortener.YAMLHandler(config.YamlFile, mapHandler)
 	if err != nil {
 		panic(err)
 	}

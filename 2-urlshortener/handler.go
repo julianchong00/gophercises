@@ -2,6 +2,7 @@ package urlshortener
 
 import (
 	"net/http"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -43,7 +44,7 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 //
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
-func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
+func YAMLHandler(yml string, fallback http.Handler) (http.HandlerFunc, error) {
 	parsedYaml, err := parseYAML(yml)
 	if err != nil {
 		return nil, err
@@ -59,9 +60,16 @@ type PathURL struct {
 }
 
 // Unmarshal YAML bytes into specified struct
-func parseYAML(yml []byte) ([]PathURL, error) {
+func parseYAML(yml string) ([]PathURL, error) {
+    // Read yaml file
+	yamlFile, err := os.ReadFile(yml)
+	if err != nil {
+		return nil, err
+	}
+
 	var pathsToUrls []PathURL
-	err := yaml.Unmarshal(yml, &pathsToUrls)
+    // Unmarshal yaml byte array into a list of PathURLs
+	err = yaml.Unmarshal(yamlFile, &pathsToUrls)
 	if err != nil {
 		return nil, err
 	}
