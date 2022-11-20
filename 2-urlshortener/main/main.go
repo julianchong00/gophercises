@@ -54,12 +54,30 @@ func main() {
 
 	// Build the YAMLHandler using the mapHandler as the
 	// fallback
-	yamlHandler, err := urlshortener.YAMLHandler(config.YamlFile, mapHandler)
-	if err != nil {
-		panic(err)
-	}
+	// yamlHandler, err := urlshortener.YAMLHandler(config.YamlFile, mapHandler)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// Build the JSONHandler using the mapHandler as the
+	// fallback
+	// jsonHandler, err := urlshortener.JSONHandler(config.JsonFile, mapHandler)
+	//    if err != nil {
+	//        panic(err)
+	//    }
+
+	// Build FilePathHandler to combine paths from yaml and json files
+	filePathHandler, err := urlshortener.FilePathHandler(
+		config.YamlFile,
+		config.JsonFile,
+		mapHandler,
+	)
+    if err != nil {
+        panic(err)
+    }
+
 	fmt.Println("Starting the server on :8080")
-	http.ListenAndServe(":8080", yamlHandler)
+	http.ListenAndServe(":8080", filePathHandler)
 }
 
 func defaultMux() *http.ServeMux {

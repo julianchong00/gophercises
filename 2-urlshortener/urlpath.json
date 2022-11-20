@@ -1,4 +1,4 @@
 [
-    {"path": "/google", "url": "https://google.com"},
-    {"path": "/ghub", "url": "https://github.com"}
+    {"path": "/google", "url": "https://www.google.com"},
+    {"path": "/ghub", "url": "https://www.github.com"}
 ]

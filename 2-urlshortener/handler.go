@@ -1,6 +1,7 @@
 package urlshortener
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 
@@ -28,6 +29,30 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 	}
 }
 
+func FilePathHandler(yml string, jsn string, fallback http.Handler) (http.HandlerFunc, error) {
+	parsedYaml, err := parseYAML(yml)
+	if err != nil {
+		return nil, err
+	}
+	yamlPathMap := buildMap(parsedYaml)
+
+	parsedJson, err := parseJSON(jsn)
+	if err != nil {
+		return nil, err
+	}
+	jsonPathMap := buildMap(parsedJson)
+
+	pathMap := make(map[string]string)
+	for k, v := range yamlPathMap {
+		pathMap[k] = v
+	}
+	for k, v := range jsonPathMap {
+		pathMap[k] = v
+	}
+
+	return MapHandler(pathMap, fallback), nil
+}
+
 // YAMLHandler will parse the provided YAML and then return
 // an http.HandlerFunc (which also implements http.Handler)
 // that will attempt to map any paths to their corresponding
@@ -53,23 +78,49 @@ func YAMLHandler(yml string, fallback http.Handler) (http.HandlerFunc, error) {
 	return MapHandler(pathMap, fallback), nil
 }
 
+func JSONHandler(json string, fallback http.Handler) (http.HandlerFunc, error) {
+	parsedJson, err := parseJSON(json)
+	if err != nil {
+		return nil, err
+	}
+	pathMap := buildMap(parsedJson)
+	return MapHandler(pathMap, fallback), nil
+}
+
 // Capitalise first letter of fields to make them visible to entire program
 type PathURL struct {
-	Path string `yaml:"path"`
-	Url  string `yaml:"url"`
+	Path string `yaml:"path" json:"path"`
+	Url  string `yaml:"url"  json:"url"`
 }
 
 // Unmarshal YAML bytes into specified struct
 func parseYAML(yml string) ([]PathURL, error) {
-    // Read yaml file
+	// Read yaml file
 	yamlFile, err := os.ReadFile(yml)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathsToUrls []PathURL
-    // Unmarshal yaml byte array into a list of PathURLs
+	// Unmarshal yaml byte array into a list of PathURLs
 	err = yaml.Unmarshal(yamlFile, &pathsToUrls)
+	if err != nil {
+		return nil, err
+	}
+
+	return pathsToUrls, nil
+}
+
+// Unmarshal JSON bytes into specified struct
+func parseJSON(jsn string) ([]PathURL, error) {
+	// Read json file
+	jsonFile, err := os.ReadFile(jsn)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathsToUrls []PathURL
+	err = json.Unmarshal(jsonFile, &pathsToUrls)
 	if err != nil {
 		return nil, err
 	}
