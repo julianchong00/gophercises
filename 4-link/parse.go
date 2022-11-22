@@ -44,17 +44,20 @@ func buildLink(n *html.Node) Link {
 // DFS function to extract text from <a> tags since they can also contain other nodes
 // or even comments (which we want to ignore)
 func text(n *html.Node) string {
+	// Base case to return just the text from text nodes
 	if n.Type == html.TextNode {
 		return n.Data
 	}
+	// Check to return empty string in the case of any tags that are not ElementNodes.
+	// Also removes comments because CommentNode is not being checked for
 	if n.Type != html.ElementNode {
 		return ""
 	}
 	var ret string
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		ret += text(c) + " "
+		ret += text(c)
 	}
-    return strings.Join(strings.Fields(ret), " ")
+	return strings.Join(strings.Fields(ret), " ")
 }
 
 // DFS function to get all link nodes from HTML and return a list
