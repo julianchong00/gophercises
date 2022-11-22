@@ -86,55 +86,65 @@ var defaultHandlerTemplate = `
 
 // Then the user can easily interact with these functions, instead
 // of having to arbitraily provide arguments to the NewHandler function
-// 
-// The user also has the advantage of being able to clearly see which 
-// parameters are required and which are optional. Default values for 
+//
+// The user also has the advantage of being able to clearly see which
+// parameters are required and which are optional. Default values for
 // optional parameters can also be easily set if not provided
 type HandlerOption func(h *handler)
 
 // So a function which takes in a h *handler as an argument is considered
 // a HandlerOption type
 func WithTemplate(t *template.Template) HandlerOption {
-    return func(h *handler) {
-        h.t = t
-    }
+	return func(h *handler) {
+		h.t = t
+	}
+}
+
+func WithPathFunc(fn func(r *http.Request) string) HandlerOption {
+	return func(h *handler) {
+		h.pathFn = fn
+	}
 }
 
 // The ... before HandlerOption means that opts can accept a variable number
 // of arguments of type HandlerOption
 func NewHandler(s Story, opts ...HandlerOption) http.Handler {
-    // Set default value of template
-    h := handler{s, tpl}
+	// Set default value of template
+	h := handler{s, tpl, defaultPathFn}
 
-    // Pass reference to handler so that any changes made by handler functions
-    // are persistent
-    for _, opt := range opts {
-        opt(&h)
-    }
+	// Pass reference to handler so that any changes made by handler functions
+	// are persistent
+	for _, opt := range opts {
+		opt(&h)
+	}
 	return h
 }
 
 type handler struct {
-	s Story
-    t *template.Template
+	s      Story
+	t      *template.Template
+	pathFn func(r *http.Request) string
 }
 
-func (h handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func defaultPathFn(r *http.Request) string {
 	path := strings.TrimSpace(r.URL.Path)
 	if path == "" || path == "/" {
 		// When no path, assume starting story from the intro
 		path = "/intro"
 	}
 	// "/intro" => "intro" - remove slashes
-	path = path[1:]
+	return path[1:]
+}
 
+func (h handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// path = ["intro"]
 	// this if statement checks if the map has something in it with the
 	// "ok" variable, otherwise it might still enter conditional without
 	// anything inside the map
 
-    // checks if chapter link exists in map, then writes template to rw
-    // with template.Execute
+	// checks if chapter link exists in map, then writes template to rw
+	// with template.Execute
+	path := h.pathFn(r)
 	if chapter, ok := h.s[path]; ok {
 		err := h.t.Execute(rw, chapter)
 		if err != nil {
