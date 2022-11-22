@@ -78,12 +78,45 @@ var defaultHandlerTemplate = `
     </body>
     </html>`
 
-func NewHandler(s Story) http.Handler {
-	return handler{s}
+// Functional Option design pattern
+// ================================
+// Basically the idea of using functions to set options, instead
+// of taking in a bunch of random parameters and setting them to
+// an Option struct.
+
+// Then the user can easily interact with these functions, instead
+// of having to arbitraily provide arguments to the NewHandler function
+// 
+// The user also has the advantage of being able to clearly see which 
+// parameters are required and which are optional. Default values for 
+// optional parameters can also be easily set if not provided
+type HandlerOption func(h *handler)
+
+// So a function which takes in a h *handler as an argument is considered
+// a HandlerOption type
+func WithTemplate(t *template.Template) HandlerOption {
+    return func(h *handler) {
+        h.t = t
+    }
+}
+
+// The ... before HandlerOption means that opts can accept a variable number
+// of arguments of type HandlerOption
+func NewHandler(s Story, opts ...HandlerOption) http.Handler {
+    // Set default value of template
+    h := handler{s, tpl}
+
+    // Pass reference to handler so that any changes made by handler functions
+    // are persistent
+    for _, opt := range opts {
+        opt(&h)
+    }
+	return h
 }
 
 type handler struct {
 	s Story
+    t *template.Template
 }
 
 func (h handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -103,7 +136,7 @@ func (h handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
     // checks if chapter link exists in map, then writes template to rw
     // with template.Execute
 	if chapter, ok := h.s[path]; ok {
-		err := tpl.Execute(rw, chapter)
+		err := h.t.Execute(rw, chapter)
 		if err != nil {
 			log.Printf("%v", err)
 			http.Error(rw, "Something went wrong...", http.StatusInternalServerError)
